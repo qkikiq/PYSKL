@@ -1,4 +1,4 @@
-# PYSKL
+# PYSKL - 私有化
 
 > Note: This repo is currently not maintained by the developer. Feel free to create forks and develop based on this piece of codes.
 
