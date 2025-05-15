@@ -146,13 +146,6 @@ def main():
 
     # 根据配置文件中的 cfg.data.train 构建训练数据集
     datasets = [build_dataset(cfg.data.train)]
-
-    # 检查是否使用元学习
-    use_maml = cfg.get('use_maml', False)
-
-
-
-
     # 设置 workflow，默认是 [('train', 1)] 表示训练 1 个 epoch
     cfg.workflow = cfg.get('workflow', [('train', 1)])
     assert len(cfg.workflow) == 1

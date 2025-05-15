@@ -118,6 +118,59 @@ def build_dataloader(dataset,
     return data_loader
 
 
+def build_meta_dataloader(base_dataset,
+                          n_way,
+                          k_shot,
+                          k_query,
+                          task_num,
+                          meta_batch_size=1,
+                          workers_per_gpu=4,
+                          seed=None,
+                          **kwargs):
+    """
+    构建用于元学习的数据加载器
+    
+    Args:
+        base_dataset (Dataset): 基础数据集实例
+        n_way (int): 任务中类别数量
+        k_shot (int): 每个类别在支持集中的样本数
+        k_query (int): 每个类别在查询集中的样本数
+        task_num (int): 每个meta-batch中的任务数量
+        meta_batch_size (int): 元批次大小，通常设置为1
+        workers_per_gpu (int): 每个GPU的数据加载工作进程数量
+        seed (int | None): 随机种子
+        **kwargs: 传递给DataLoader的其他参数
+        
+    Returns:
+        DataLoader: 用于元学习训练的数据加载器
+    """
+    # 创建元学习任务数据集
+    meta_dataset = MetaTaskDataset(
+        base_dataset=base_dataset,
+        n_way=n_way,
+        k_shot=k_shot,
+        k_query=k_query,
+        task_num=task_num,
+        pipeline=base_dataset.pipeline if hasattr(base_dataset, 'pipeline') else None
+    )
+    
+    # 创建数据加载器
+    init_fn = partial(
+        worker_init_fn, num_workers=workers_per_gpu, rank=0,
+        seed=seed) if seed is not None else None
+    
+    data_loader = DataLoader(
+        meta_dataset,
+        batch_size=meta_batch_size,  # 通常meta_batch_size=1，因为一个batch已经包含了task_num个任务
+        num_workers=workers_per_gpu,
+        pin_memory=kwargs.pop('pin_memory', True),
+        worker_init_fn=init_fn,
+        **kwargs
+    )
+    
+    return data_loader
+
+
 def worker_init_fn(worker_id, num_workers, rank, seed):
     """Init the random seed for various workers."""
     # The seed of each worker equals to
